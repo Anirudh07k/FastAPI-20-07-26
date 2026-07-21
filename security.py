@@ -3,6 +3,8 @@ from datetime import (datetime, timedelta, timezone)
 import jwt
 from dotenv import load_dotenv
 from pwdlib import PasswordHash
+from uuid import UUID
+from fastapi import HTTPException, status
 
 load_dotenv()
 
@@ -33,3 +35,43 @@ def create_access_token(user_id: str) -> str:
     encoded_token = jwt.encode(token_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
     return encoded_token
+
+def decode_access_token(token: str) -> str:
+    try:
+        payload = jwt.decode(token, 
+                             JWT_SECRET_KEY,
+                             algorithms=[JWT_ALGORITHM],
+                             options={
+                                 "require": ["sub", "exp"]
+                                }
+                            )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access Token has Expired",
+            headers={
+                "WWW-Authenticate" : "Bearer" 
+            }
+        )
+    
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication Failed",
+            headers={
+                "WWW-Authenticate" : "Bearer"
+            }
+        )
+    subject = payload.get("sub")
+
+    try:
+        user_id = str(UUID(subject))
+    except ValueError, TypeError, AttributeError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authentication Credentials",
+            headers={
+                "WWW-Authenticate" : "Bearer"
+            }
+        )
+    return user_id
