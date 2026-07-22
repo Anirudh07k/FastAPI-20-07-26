@@ -51,3 +51,14 @@ def get_current_user(credentials :
     return UserResponse.model_validate(user_data)
 
 CurrentUser = Annotated[UserResponse, Depends(get_current_user)]
+
+
+def require_admin(current_user: CurrentUser) -> UserResponse:
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin permission required"
+        )
+    return current_user
+
+CurrentAdmin = Annotated[UserResponse, Depends(require_admin)]

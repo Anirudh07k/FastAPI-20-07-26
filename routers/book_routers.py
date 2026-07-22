@@ -7,7 +7,7 @@ from models.book_models import(
     BookResponse,
     BookActionResponse
 )
-from dependencies import CurrentUser
+from dependencies import CurrentAdmin
 
 router = APIRouter(
     prefix="/books",
@@ -57,7 +57,7 @@ def get_book_by_id(book_id: int):
             response_model=BookActionResponse,
             status_code=status.HTTP_201_CREATED
             )
-def get_book_by_id(book: BookCreate, current_user : CurrentUser):
+def add_new_book(book: BookCreate, current_admin : CurrentAdmin):
     try:
         response = supabase.table("books").insert(book.model_dump()).select("*").execute()
             
@@ -79,7 +79,7 @@ def get_book_by_id(book: BookCreate, current_user : CurrentUser):
 
 
 @router.put("/{book_id}", response_model=BookActionResponse, status_code=status.HTTP_200_OK)
-def update_book(book_id: int, book: BookUpdate, current_user : CurrentUser):
+def update_book(book_id: int, book: BookUpdate, current_admin : CurrentAdmin):
     try:
         response = (
             supabase.table("books")
@@ -105,7 +105,7 @@ def update_book(book_id: int, book: BookUpdate, current_user : CurrentUser):
         response_model=BookActionResponse, 
         status_code=status.HTTP_200_OK
         )
-def patch_book(book_id: int, book: BookPatch, current_user : CurrentUser):
+def patch_book(book_id: int, book: BookPatch, current_admin : CurrentAdmin):
     patch_book = book.model_dump(exclude_unset=True, exclude_none=True)
     if not patch_book:
         raise HTTPException(
@@ -133,7 +133,7 @@ def patch_book(book_id: int, book: BookPatch, current_user : CurrentUser):
         response_model=BookActionResponse, 
         status_code=status.HTTP_200_OK
         )
-def delete_book(book_id: int, current_user : CurrentUser):
+def delete_book(book_id: int, current_admin : CurrentAdmin):
     try:
         response = (supabase.table("books").delete().eq("id", book_id).select("*").execute())
     except Exception as error:
